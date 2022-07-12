@@ -106,6 +106,7 @@ namespace PasswordChanger1C
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "RawHashesPrompt";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Хеши";
             this.ResumeLayout(false);
             this.PerformLayout();

@@ -63,6 +63,7 @@ namespace PasswordChanger1C
             this._ButtonChangePwdFileDB = new System.Windows.Forms.Button();
             this.Label1 = new System.Windows.Forms.Label();
             this.TabPage2 = new System.Windows.Forms.TabPage();
+            this.SetRawHashesSQL = new System.Windows.Forms.Button();
             this.Label7 = new System.Windows.Forms.Label();
             this._cbDBType = new System.Windows.Forms.ComboBox();
             this.TextBox2 = new System.Windows.Forms.TextBox();
@@ -75,6 +76,7 @@ namespace PasswordChanger1C
             this.ColumnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.ColumnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.ColumnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.ColumnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.ColumnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.TabPage3 = new System.Windows.Forms.TabPage();
             this.LabelDatabaseVersionRepo = new System.Windows.Forms.Label();
@@ -87,10 +89,10 @@ namespace PasswordChanger1C
             this._LinkLabel1 = new System.Windows.Forms.LinkLabel();
             this.Label3 = new System.Windows.Forms.Label();
             this._LinkLabel2 = new System.Windows.Forms.LinkLabel();
-            this.SetRawHashesSQL = new System.Windows.Forms.Button();
             this.ContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.CopyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.ColumnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.SetRawHashes = new System.Windows.Forms.Button();
+            this.UserPassHash2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.TabControl1.SuspendLayout();
             this.TabPage1.SuspendLayout();
             this.TabPage2.SuspendLayout();
@@ -145,6 +147,7 @@ namespace PasswordChanger1C
             this.UserName,
             this.UserDescr,
             this.UserPassHash,
+            this.UserPassHash2,
             this.UserAdmRole});
             this.ListViewUsers.FullRowSelect = true;
             this.ListViewUsers.HideSelection = false;
@@ -154,6 +157,7 @@ namespace PasswordChanger1C
             this.ListViewUsers.TabIndex = 14;
             this.ListViewUsers.UseCompatibleStateImageBehavior = false;
             this.ListViewUsers.View = System.Windows.Forms.View.Details;
+            this.ListViewUsers.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ListViewUsers_MouseClick);
             // 
             // UserGUID
             // 
@@ -278,6 +282,7 @@ namespace PasswordChanger1C
             // 
             // TabPage1
             // 
+            this.TabPage1.Controls.Add(this.SetRawHashes);
             this.TabPage1.Controls.Add(this.LabelDatabaseVersion);
             this.TabPage1.Controls.Add(this.NewPassword);
             this.TabPage1.Controls.Add(this.Label2);
@@ -336,7 +341,7 @@ namespace PasswordChanger1C
             this.TextBox3.Location = new System.Drawing.Point(9, 413);
             this.TextBox3.Multiline = true;
             this.TextBox3.Name = "TextBox3";
-            this.TextBox3.Size = new System.Drawing.Size(613, 29);
+            this.TextBox3.Size = new System.Drawing.Size(505, 29);
             this.TextBox3.TabIndex = 23;
             this.TextBox3.Text = "Файл информационной базы не должен быть открыт никакими другими приложениями.";
             // 
@@ -383,6 +388,17 @@ namespace PasswordChanger1C
             this.TabPage2.TabIndex = 1;
             this.TabPage2.Text = "Клиент-серверная ИБ";
             this.TabPage2.UseVisualStyleBackColor = true;
+            // 
+            // SetRawHashesSQL
+            // 
+            this.SetRawHashesSQL.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.SetRawHashesSQL.Location = new System.Drawing.Point(510, 414);
+            this.SetRawHashesSQL.Name = "SetRawHashesSQL";
+            this.SetRawHashesSQL.Size = new System.Drawing.Size(109, 51);
+            this.SetRawHashesSQL.TabIndex = 25;
+            this.SetRawHashesSQL.Text = "Установить сырые хеши";
+            this.SetRawHashesSQL.UseVisualStyleBackColor = true;
+            this.SetRawHashesSQL.Click += new System.EventHandler(this.SetRawHashesSQL_Click);
             // 
             // Label7
             // 
@@ -505,6 +521,11 @@ namespace PasswordChanger1C
             this.ColumnHeader4.Text = "Хеш пароля";
             this.ColumnHeader4.Width = 220;
             // 
+            // ColumnHeader6
+            // 
+            this.ColumnHeader6.Text = "Хеш пароля 2";
+            this.ColumnHeader6.Width = 220;
+            // 
             // ColumnHeader5
             // 
             this.ColumnHeader5.Text = "Адм.роль";
@@ -624,17 +645,6 @@ namespace PasswordChanger1C
             this._LinkLabel2.Text = "© Aleksey.Bochkov";
             this._LinkLabel2.Click += new System.EventHandler(this.LinkLabel2_Click);
             // 
-            // SetRawHashesSQL
-            // 
-            this.SetRawHashesSQL.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.SetRawHashesSQL.Location = new System.Drawing.Point(544, 414);
-            this.SetRawHashesSQL.Name = "SetRawHashesSQL";
-            this.SetRawHashesSQL.Size = new System.Drawing.Size(75, 51);
-            this.SetRawHashesSQL.TabIndex = 25;
-            this.SetRawHashesSQL.Text = "Установить сырые хеши";
-            this.SetRawHashesSQL.UseVisualStyleBackColor = true;
-            this.SetRawHashesSQL.Click += new System.EventHandler(this.SetRawHashesSQL_Click);
-            // 
             // ContextMenu
             // 
             this.ContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -649,10 +659,21 @@ namespace PasswordChanger1C
             this.CopyToolStripMenuItem.Text = "Копировать";
             this.CopyToolStripMenuItem.Click += new System.EventHandler(this.CopyToolStripMenuItem_Click);
             // 
-            // ColumnHeader6
+            // SetRawHashes
             // 
-            this.ColumnHeader6.Text = "Хеш пароля 2";
-            this.ColumnHeader6.Width = 220;
+            this.SetRawHashes.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.SetRawHashes.Location = new System.Drawing.Point(510, 414);
+            this.SetRawHashes.Name = "SetRawHashes";
+            this.SetRawHashes.Size = new System.Drawing.Size(109, 51);
+            this.SetRawHashes.TabIndex = 27;
+            this.SetRawHashes.Text = "Установить сырые хеши";
+            this.SetRawHashes.UseVisualStyleBackColor = true;
+            this.SetRawHashes.Click += new System.EventHandler(this.SetRawHashes_Click);
+            // 
+            // UserPassHash2
+            // 
+            this.UserPassHash2.Text = "Хеш пароля 2";
+            this.UserPassHash2.Width = 164;
             // 
             // MainForm
             // 
@@ -988,6 +1009,8 @@ namespace PasswordChanger1C
         private ContextMenuStrip ContextMenu;
         private ToolStripMenuItem CopyToolStripMenuItem;
         internal ColumnHeader ColumnHeader6;
+        private Button SetRawHashes;
+        protected internal ColumnHeader UserPassHash2;
 
         internal ComboBox cbDBType
         {

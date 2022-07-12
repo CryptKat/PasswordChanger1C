@@ -233,6 +233,7 @@ namespace PasswordChanger1C
                 itemUserList.SubItems.Add(Row["NAME"].ToString());
                 itemUserList.SubItems.Add(Row["DESCR"].ToString());
                 itemUserList.SubItems.Add(Row["UserPassHash"].ToString());
+                itemUserList.SubItems.Add(Row["UserPassHash2"].ToString());
                 itemUserList.SubItems.Add(CommonModule.Format_AdmRole((bool)Row["ADMROLE"]));
                 ListViewUsers.Items.Add(itemUserList);
             }
@@ -508,11 +509,11 @@ namespace PasswordChanger1C
 
         private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (var item in SQLUserList.SelectedItems)
+            var listView = TabControl1.SelectedIndex == 1 ? SQLUserList : ListViewUsers;
+            StringBuilder sb = new();
+            foreach (var item in listView.SelectedItems)
             {
-                ListViewItem l = item as ListViewItem;
-                if (l != null)
+                if (item is ListViewItem l)
                     foreach (ListViewItem.ListViewSubItem sub in l.SubItems)
                         sb.Append(sub.Text + "\t");
                 sb.AppendLine();
@@ -525,6 +526,67 @@ namespace PasswordChanger1C
             if (e.Button == MouseButtons.Right)
             {
                 ContextMenu.Show(SQLUserList, e.Location);
+            }
+        }
+
+        private void SetRawHashes_Click(object sender, EventArgs e)
+        {
+            if (ListViewUsers.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Не выделены строки с пользователями для сброса пароля!",
+                                "Не выделены строки с пользователями", MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+                return;
+            }
+
+            var Rez = MessageBox.Show("Внесение изменений в файл информационной базы может привести к непредсказуемым последствиям, вплоть до полного разрушения базы! " + Environment.NewLine +
+                        "Продолжая операцию Вы осознаете это и понимаете, что восстановление будет возможно только из резервной копии." + Environment.NewLine +
+                        "Установить новый пароль выбранным пользователям?",
+                        "ВНИМАНИЕ!", MessageBoxButtons.YesNo);
+            if (Rez != DialogResult.Yes)
+            {
+                return;
+            }
+
+            using var form = new RawHashesPrompt();
+            if (form.ShowDialog() != DialogResult.OK)
+                return;
+
+            List<string> Selected_ID = new();
+            foreach (ListViewItem item in ListViewUsers.SelectedItems) Selected_ID.Add(item.Text);
+
+            var SelectedRows = TableParams.Records.FindAll(Row => Selected_ID.Contains(Row["UserGuidStr"].ToString()));
+            var UserNames = string.Join(", ", SelectedRows.Select(Row => Row["NAME"].ToString()));
+
+            try
+            {
+                foreach (var Row in SelectedRows)
+                {
+                    var Current_Row = Row;
+                    AccessFunctions.UpdateRawHashes_IB(ref Current_Row, form.PasswordHash.Text.Trim(), form.PasswordHash2.Text.Trim());
+                    AccessFunctions.WritePasswordIntoInfoBaseIB(FileIB.Text, TableParams, Current_Row);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при попытке записи данных в файл информационной базы:" + Environment.NewLine +
+                            ex.Message,
+                            "Ошибка работы с файлом", MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                return;
+            }
+
+            MessageBox.Show("Успешно установлен пароль для пользователей:" + UserNames,
+                            "Операция успешно выполнена", MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+            GetUsers();
+        }
+
+        private void ListViewUsers_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                ContextMenu.Show(ListViewUsers, e.Location);
             }
         }
     }
