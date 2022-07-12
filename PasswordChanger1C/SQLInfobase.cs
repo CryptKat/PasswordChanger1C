@@ -91,6 +91,18 @@ namespace PasswordChanger1C
             SQLUser.Data = NewBytes;
         }
 
+        public static void UpdateRawHashes(ref SQLUser SQLUser, in string passHash, in string passHash2)
+        {
+            var NewHashes = Tuple.Create(passHash, passHash2);
+            var OldHashes = Tuple.Create(SQLUser.PassHash, SQLUser.PassHash2);
+            string NewData = CommonModule.ReplaceHashes(SQLUser.DataStr, OldHashes, NewHashes);
+            var NewBytes = CommonModule.EncodePasswordStructure(NewData, SQLUser.KeySize, SQLUser.KeyData);
+            SQLUser.PassHash = NewHashes.Item1;
+            SQLUser.PassHash2 = NewHashes.Item2;
+            SQLUser.DataStr = NewData;
+            SQLUser.Data = NewBytes;
+        }
+
         public static Func<IDbConnection> CreateConnectionFactory(in DBMSType dbms_type, string connection_str)
         {
             return dbms_type switch

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace PasswordChanger1C
@@ -213,6 +214,7 @@ namespace PasswordChanger1C
                 itemUserList.SubItems.Add(Row.Name);
                 itemUserList.SubItems.Add(Row.Descr);
                 itemUserList.SubItems.Add(Row.PassHash);
+                itemUserList.SubItems.Add(Row.PassHash2);
                 itemUserList.SubItems.Add(Row.AdmRole);
                 SQLUserList.Items.Add(itemUserList);
             }
@@ -307,7 +309,60 @@ namespace PasswordChanger1C
                                 MessageBoxIcon.Error);
             }
         }
-        
+
+        public void SetUsersRawHashes_SQLInfobase(in SQLInfobase.DBMSType dbms_type, string passHash, string passHash2)
+        {
+            bool is_Success = true;
+            List<string> Selected_ID = new();
+            foreach (ListViewItem item in SQLUserList.SelectedItems) Selected_ID.Add(item.Text);
+
+            var SelectedUsers = SQLUsers.FindAll(user => Selected_ID.Contains(user.IDStr) && user.PassHash != "");
+            if (0 == SelectedUsers.Count)
+            {
+                MessageBox.Show("Невозможно изменить пароль выбранным пользователям, так как авторизация средставми 1С не используется",
+                                "Ошибка изменения пароля", MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                return;
+            }
+
+            var UserNames = string.Join(", ", SelectedUsers.Select(user => user.Name));
+
+            var factory = SQLInfobase.CreateConnectionFactory(dbms_type, ConnectionString.Text);
+
+            try
+            {
+                var Users = new SQLInfobase.Users(dbms_type, factory);
+                foreach (var SelectedUser in SelectedUsers)
+                {
+                    var User = SelectedUser;
+                    SQLInfobase.UpdateRawHashes(ref User, passHash.Trim(), passHash2.Trim());
+                    is_Success = is_Success && Users.Update(User);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при попытке записи новых данных пользователей в базу данных:" + Environment.NewLine +
+                                ex.Message,
+                                "Ошибка работы с базой данных", MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                return;
+            }
+
+            if (is_Success)
+            {
+                MessageBox.Show("Успешно установлен пароль для пользователей:" + Environment.NewLine + UserNames,
+                                "Операция успешно выполнена", MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+                GetUsers_SQLInfobase(dbms_type);
+            }
+            else
+            {
+                MessageBox.Show("Не удалось установить пароль пользователям:" + Environment.NewLine + UserNames,
+                                "Ошибка установки пароля", MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+            }
+        }
+
         private void ButtonSetRepoPassword_Click(object sender, EventArgs e)
         {
             if (RepoUserList.SelectedItems.Count == 0)
@@ -423,6 +478,54 @@ namespace PasswordChanger1C
                 SQLInfobase.DBMSType.PostgreSQL => "Host=localhost;Username=postgres;Password=password;Database=database",
                 _ => throw new SQLInfobase.WrongDBMSTypeException("unknown DBMS type"),
             };
+        }
+
+        private void SetRawHashesSQL_Click(object sender, EventArgs e)
+        {
+            if (SQLUserList.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Не выделены строки с пользователями для установки нового пароля!",
+                                "Не выделены строки с пользователями", MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+                return;
+            }
+
+            var Rez = MessageBox.Show("Внесение изменений в базу данных может привести к непредсказуемым последствиям, вплоть до полного разрушения базы. " + Environment.NewLine +
+                            "Продолжая операцию Вы осознаете это и понимаете, что восстановление будет возможно только из резервной копии." + Environment.NewLine +
+                            "Установить новый пароль выбранным пользователям?",
+                            "ВНИМАНИЕ!", MessageBoxButtons.YesNo);
+            if (Rez != DialogResult.Yes)
+            {
+                return;
+            }
+
+            using var form = new RawHashesPrompt();
+            if (form.ShowDialog() != DialogResult.OK)
+                return;
+
+            SetUsersRawHashes_SQLInfobase(Selected_DBMSType(), form.PasswordHash.Text, form.PasswordHash2.Text);
+        }
+
+        private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var item in SQLUserList.SelectedItems)
+            {
+                ListViewItem l = item as ListViewItem;
+                if (l != null)
+                    foreach (ListViewItem.ListViewSubItem sub in l.SubItems)
+                        sb.Append(sub.Text + "\t");
+                sb.AppendLine();
+            }
+            Clipboard.SetDataObject(sb.ToString());
+        }
+
+        private void SQLUserList_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                ContextMenu.Show(SQLUserList, e.Location);
+            }
         }
     }
 }
